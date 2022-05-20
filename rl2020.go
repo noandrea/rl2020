@@ -101,6 +101,7 @@ func (rl RevocationList2020) Size() int {
 	return rl.bitSet.size()
 }
 
+// Update - set a list of credential indexes either to revoked (action to true) or reset (action to false)
 func (rl *RevocationList2020) Update(action bool, indexes ...int) (err error) {
 	for _, i := range indexes {
 		if i < 0 || i >= rl.Capacity() {
@@ -115,14 +116,23 @@ func (rl *RevocationList2020) Update(action bool, indexes ...int) (err error) {
 	return
 }
 
+// Raw return the bitset associated with the revocation list
+func (rl RevocationList2020) Raw() []byte {
+	return rl.bitSet
+}
+
+// Revoke revoke a credential by it's index, that is, set the corresponding bit to 1
 func (rl *RevocationList2020) Revoke(credentials ...int) (err error) {
 	return rl.Update(Revoke, credentials...)
 }
 
+// Reset reset a credential status by it's index, that is, set the corresponding bit to 0
 func (rl *RevocationList2020) Reset(credentials ...int) (err error) {
 	return rl.Update(Reset, credentials...)
 }
 
+// IsRevoked check the value for CredentialStatus in the list. Check if the corresponding
+// bit is set (1) or not (0)
 func (rl RevocationList2020) IsRevoked(status CredentialStatus) (isIt bool, err error) {
 	if status.Type != TypeRevocationList2020Status {
 		err = fmt.Errorf("unsupported type %v, expected %v", rl.Type, TypeRevocationList2020Status)

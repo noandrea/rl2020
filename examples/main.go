@@ -20,6 +20,7 @@ func main() {
 	rl.Revoke(100)
 	rl.Revoke(1000)
 	rl.Revoke(10000)
+	rl.Revoke(94567)
 
 	var cs rl2020.CredentialStatus
 	var revoked bool
@@ -33,9 +34,10 @@ func main() {
 	revoked, _ = rl.IsRevoked(cs)
 	fmt.Println(revoked)
 
+	// marshal the revocation list
 	v, _ := json.Marshal(rl)
 	fmt.Printf("%s\n", v)
 
-	fmt.Printf("%b\n", rl.bitSet)
+	fmt.Printf("%08b\n", rl.Raw())
 
 }
