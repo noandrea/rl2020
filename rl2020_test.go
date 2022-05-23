@@ -74,7 +74,7 @@ func TestNewRevocationList(t *testing.T) {
 func TestRevocationList2020_Update(t *testing.T) {
 
 	cs := func(idx int, cred string) CredentialStatus {
-		return CredentialStatus{
+		return CredentialStatusJSON{
 			ID:                       fmt.Sprint(cred, "/", idx),
 			Type:                     TypeRevocationList2020Status,
 			RevocationListIndex:      idx,

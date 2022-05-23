@@ -21,16 +21,36 @@ const (
 
 // CredentialStatus represent the status block of a credential issued using the RevocationList2020
 // as a revocation method. See https://w3c-ccg.github.io/vc-status-rl-2020/#revocationlist2020status
-type CredentialStatus struct {
+type CredentialStatus interface {
+	// Coordinates returns the credential list ID to check for revocation,
+	// and the index within the list
+	Coordinates() (string, int)
+	// TypeDef returns the ID and the Type of the credential status itself
+	TypeDef() (string, string)
+}
+
+// CredentialStatusJSON implements the CredentialStatus interface serializable to JSON
+// according to the W3C draft proposal
+type CredentialStatusJSON struct {
 	ID                       string `json:"id"`
 	Type                     string `json:"type"`
 	RevocationListIndex      int    `json:"revocationListIndex"`
 	RevocationListCredential string `json:"revocationListCredential"`
 }
 
+// Coordinates retun the revocation list id and credential index within the list
+func (cs CredentialStatusJSON) Coordinates() (string, int) {
+	return cs.RevocationListCredential, cs.RevocationListIndex
+}
+
+// TypeDef returns the credential status ID and type for correctness check
+func (cs CredentialStatusJSON) TypeDef() (string, string) {
+	return cs.ID, cs.Type
+}
+
 // NewCredentialStatus creates a new CredentialStatus
 func NewCredentialStatus(rlCredential string, rlIndex int) CredentialStatus {
-	return CredentialStatus{
+	return CredentialStatusJSON{
 		ID:                       fmt.Sprint(rlCredential, "/", rlIndex),
 		Type:                     TypeRevocationList2020Status,
 		RevocationListCredential: rlCredential,
@@ -135,21 +155,33 @@ func (rl *RevocationList2020) Reset(credentials ...int) (err error) {
 // IsRevoked check the value for CredentialStatus in the list. Check if the corresponding
 // bit is set (1) or not (0)
 func (rl RevocationList2020) IsRevoked(status CredentialStatus) (isIt bool, err error) {
-	if status.Type != TypeRevocationList2020Status {
+	csID, csType := status.TypeDef()
+	if strings.TrimSpace(csID) == "" {
+		err = fmt.Errorf("credential status ID is empty")
+		return
+	}
+	if csType != TypeRevocationList2020Status {
 		err = fmt.Errorf("unsupported type %v, expected %v", rl.Type, TypeRevocationList2020Status)
 		return
 	}
-	if status.RevocationListCredential != rl.ID {
-		err = fmt.Errorf("wrong revocation list, expected %v, got %v", rl.ID, status.RevocationListCredential)
+	// check corordinates
+	list, index := status.Coordinates()
+	if list != rl.ID {
+		err = fmt.Errorf("wrong revocation list, expected %v, got %v", rl.ID, list)
 		return
 	}
-	if status.RevocationListIndex < 0 || status.RevocationListIndex >= rl.Capacity() {
-		err = fmt.Errorf("credential index out of range 0-%d: %v", rl.Capacity(), status.RevocationListCredential)
+	if index < 0 || index >= rl.Capacity() {
+		err = fmt.Errorf("credential index out of range 0-%d: %v", rl.Capacity(), list)
 		return
 	}
 
-	isIt = rl.bitSet.getBit(status.RevocationListIndex)
+	isIt = rl.bitSet.getBit(index)
 	return
+}
+
+// GetBytes returns the json serialized revocation list
+func (rl RevocationList2020) GetBytes() ([]byte, error) {
+	return json.Marshal(rl)
 }
 
 type bitSet []uint8
