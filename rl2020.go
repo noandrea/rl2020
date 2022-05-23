@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -116,8 +117,8 @@ func (rl *RevocationList2020) Update(action bool, indexes ...int) (err error) {
 	return
 }
 
-// Raw return the bitset associated with the revocation list
-func (rl RevocationList2020) Raw() []byte {
+// BitSet return the bitset associated with the revocation list
+func (rl RevocationList2020) BitSet() []byte {
 	return rl.bitSet
 }
 
@@ -191,42 +192,23 @@ func pack(set bitSet) (s string, err error) {
 	if err = w.Close(); err != nil {
 		return
 	}
-	// reset the buffer
-	zData := bb.Bytes()
-	bb.Reset()
 	// encode to base64
-	bw := base64.NewEncoder(base64.StdEncoding, &bb)
-	defer bw.Close()
-	if _, err = bw.Write(zData); err != nil {
-		return
-	}
-	//
-	s = bb.String()
+	s = base64.StdEncoding.EncodeToString(bb.Bytes())
 	return
 }
 
 func unpack(s string) (bs bitSet, err error) {
-	var bb bytes.Buffer
-	if _, err = bb.WriteString(s); err != nil {
-		return
-	}
-	bw := base64.NewDecoder(base64.StdEncoding, &bb)
-	// decode to bytes
-	var zbs []byte
-	bw.Read(zbs)
-	// reset the byte buffer and write the decoded bytes
-	bb.Reset()
-	if _, err = bb.Write(zbs); err != nil {
-		return
-	}
-	// pass the buffer to the zlib reader
-	r, err := zlib.NewReader(&bb)
+	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return
 	}
-	defer r.Close()
-	if _, err = r.Read(bs); err != nil {
+	// pass the buffer to the zlib reader
+	zr, err := zlib.NewReader(bytes.NewReader(b))
+	if err != nil {
 		return
 	}
-	return
+	if err = zr.Close(); err != nil {
+		return
+	}
+	return io.ReadAll(zr)
 }

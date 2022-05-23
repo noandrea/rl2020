@@ -28,7 +28,7 @@ func TestNewRevocationList(t *testing.T) {
 				return &RevocationList2020{
 					"test-1",
 					TypeRevocationList2020,
-					"eJzswDEBAAAAwiD7pzbGHhgAAAAAAAAAAAAAAAAAAACQewAAAP//QAAA",
+					"eJzswDEBAAAAwiD7pzbGHhgAAAAAAAAAAAAAAAAAAACQewAAAP//QAAAAQ==",
 					make([]byte, 16384),
 				}
 			},
@@ -140,6 +140,51 @@ func TestRevocationList2020_Update(t *testing.T) {
 					assert.Equal(t, tt.wantErr.Error(), err.Error())
 				}
 			}
+		})
+	}
+}
+
+func TestRevocationList2020_Serialization(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		rlFn     func() RevocationList2020
+		toRevoke []int // element to revoke
+		wantErr  error
+	}{
+		{
+			"PASS: list serializaiton and deserialization successful",
+			func() RevocationList2020 {
+				rl, _ := NewRevocationList("c0", 16)
+				return rl
+			},
+			[]int{10, 54312, 12313, 122311, 11},
+			nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rl := tt.rlFn()
+			// revocation
+			if err := rl.Revoke(tt.toRevoke...); tt.wantErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Equal(t, tt.wantErr.Error(), err.Error())
+			}
+			// serialize the revocation list
+			rlB, err := rl.GetBytes()
+			if tt.wantErr != nil {
+				assert.Equal(t, tt.wantErr.Error(), err.Error())
+			}
+			assert.NoError(t, err)
+			// load the serialized stuff
+			rlN, err := NewRevocationListFromJSON(rlB)
+			if tt.wantErr != nil {
+				assert.Equal(t, tt.wantErr.Error(), err.Error())
+			}
+			assert.NoError(t, err)
+			// compare
+			assert.Equal(t, rl, rlN)
 		})
 	}
 }

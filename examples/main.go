@@ -38,6 +38,6 @@ func main() {
 	v, _ := json.Marshal(rl)
 	fmt.Printf("%s\n", v)
 
-	fmt.Printf("%08b\n", rl.Raw())
+	fmt.Printf("%08b\n", rl.BitSet())
 
 }
