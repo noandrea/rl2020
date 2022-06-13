@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	maxBitSetSize                = 128 // max size is 128kb
-	minBitSetSize                = 16  // minimum bit set size
-	TypeRevocationList2020       = "RevocationList2020"
-	TypeRevocationList2020Status = "RevocationList2020status"
-	Revoke                       = true
-	Reset                        = false
+	maxBitSetSize                    = 128 // max size is 128kb
+	minBitSetSize                    = 16  // minimum bit set size
+	TypeRevocationList2020           = "RevocationList2020"
+	TypeRevocationList2020Credential = "RevocationList2020Credential"
+	TypeRevocationList2020Status     = "RevocationList2020status"
+	Revoke                           = true
+	Reset                            = false
 )
 
 // CredentialStatus represent the status block of a credential issued using the RevocationList2020

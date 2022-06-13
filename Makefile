@@ -100,4 +100,4 @@ endif
 ifneq ($(shell git rev-parse --abbrev-ref HEAD),main)
 	$(error you are not on the main branch. aborting)
 endif
-	git tag -s -a "$(APP_VERSION)" -m "Changelog: https://github.com/elesto-dao/elesto/blob/main/CHANGELOG.md"
+	git tag -s -a "$(APP_VERSION)" -m "Changelog: https://github.com/noandrea/rl2020/blob/main/CHANGELOG.md"
